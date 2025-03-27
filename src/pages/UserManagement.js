@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
 import { Card, Table, Button, Form, Modal, Row, Col, Badge, InputGroup, FormControl } from 'react-bootstrap';
+import { useAuth } from '../context/AuthContext';
 
 function UserManagement() {
+    // 권한 정보 가져오기
+    const {
+        canViewUsers,
+        canCreateUser,
+        canEditUser,
+        canDeleteUser,
+        currentUser
+    } = useAuth();
+
     const [users, setUsers] = useState([
         { id: 1, name: '홍길동', email: 'hong@example.com', role: 'admin', department: '경영관리', status: 'active', lastActive: '2025-03-27 10:15' },
         { id: 2, name: '김민수', email: 'kim@example.com', role: 'manager', department: '마케팅', status: 'active', lastActive: '2025-03-26 16:22' },
@@ -13,6 +23,7 @@ function UserManagement() {
     const [showModal, setShowModal] = useState(false);
     const [editUser, setEditUser] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [passwordError, setPasswordError] = useState('');
 
     // 역할에 따른 배지 색상
     const roleBadge = (role) => {
@@ -47,6 +58,23 @@ function UserManagement() {
         event.preventDefault();
         const form = event.target;
 
+        // 새 사용자 추가 시 비밀번호 검증
+        if (!editUser) {
+            if (form.password.value.length < 8) {
+                setPasswordError('비밀번호는 8자 이상이어야 합니다.');
+                return;
+            }
+            if (form.password.value !== form.confirmPassword.value) {
+                setPasswordError('비밀번호가 일치하지 않습니다.');
+                return;
+            }
+            const specialChars = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/;
+            if (!specialChars.test(form.password.value)) {
+                setPasswordError('비밀번호에는 특수 문자가 포함되어야 합니다.');
+                return;
+            }
+        }
+
         const userData = {
             name: form.name.value,
             email: form.email.value,
@@ -67,10 +95,17 @@ function UserManagement() {
 
         setShowModal(false);
         setEditUser(null);
+        setPasswordError('');
     };
 
     // 유저 편집 모달 열기
     const handleEditUser = (user) => {
+        // 자신보다 높은 권한의 사용자는 편집 불가능
+        if (currentUser.role !== 'admin' && user.role === 'admin') {
+            alert('관리자 계정은 수정할 수 없습니다.');
+            return;
+        }
+
         setEditUser(user);
         setShowModal(true);
     };
@@ -78,11 +113,26 @@ function UserManagement() {
     // 새 유저 추가 모달 열기
     const handleAddUser = () => {
         setEditUser(null);
+        setPasswordError('');
         setShowModal(true);
     };
 
     // 유저 삭제
     const handleDeleteUser = (userId) => {
+        const userToDelete = users.find(user => user.id === userId);
+
+        // 관리자는 삭제 불가
+        if (userToDelete.role === 'admin') {
+            alert('관리자 계정은 삭제할 수 없습니다.');
+            return;
+        }
+
+        // 자기 자신은 삭제 불가
+        if (currentUser.id === userId) {
+            alert('자신의 계정은 삭제할 수 없습니다.');
+            return;
+        }
+
         if (window.confirm('정말 이 사용자를 삭제하시겠습니까?')) {
             setUsers(users.filter(user => user.id !== userId));
         }
@@ -94,6 +144,17 @@ function UserManagement() {
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.department.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // 사용자가 볼 수 있는 권한이 없는 경우
+    if (!canViewUsers()) {
+        return (
+            <div className="text-center p-5">
+                <h3>접근 권한이 없습니다</h3>
+                <p className="text-muted">사용자 관리 페이지를 볼 수 있는 권한이 없습니다.</p>
+                <Button variant="primary" href="/">대시보드로 돌아가기</Button>
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -112,9 +173,11 @@ function UserManagement() {
                                 />
                                 <Button variant="outline-secondary">검색</Button>
                             </InputGroup>
-                            <Button variant="primary" onClick={handleAddUser}>
-                                <i className="bi bi-plus"></i> 사용자 추가
-                            </Button>
+                            {canCreateUser() && (
+                                <Button variant="primary" onClick={handleAddUser}>
+                                    <i className="bi bi-plus"></i> 사용자 추가
+                                </Button>
+                            )}
                         </div>
                     </div>
 
@@ -140,12 +203,30 @@ function UserManagement() {
                                 <td>{statusBadge(user.status)}</td>
                                 <td>{user.lastActive}</td>
                                 <td>
-                                    <Button variant="outline-primary" size="sm" onClick={() => handleEditUser(user)} className="me-1">
-                                        편집
-                                    </Button>
-                                    <Button variant="outline-danger" size="sm" onClick={() => handleDeleteUser(user.id)}>
-                                        삭제
-                                    </Button>
+                                    {canEditUser() && (
+                                        <Button
+                                            variant="outline-primary"
+                                            size="sm"
+                                            onClick={() => handleEditUser(user)}
+                                            className="me-1"
+                                            disabled={user.role === 'admin' && currentUser.role !== 'admin'}
+                                        >
+                                            편집
+                                        </Button>
+                                    )}
+                                    {canDeleteUser() && (
+                                        <Button
+                                            variant="outline-danger"
+                                            size="sm"
+                                            onClick={() => handleDeleteUser(user.id)}
+                                            disabled={user.role === 'admin' || user.id === currentUser.id}
+                                        >
+                                            삭제
+                                        </Button>
+                                    )}
+                                    {!canEditUser() && !canDeleteUser() && (
+                                        <Badge bg="secondary">권한 없음</Badge>
+                                    )}
                                 </td>
                             </tr>
                         ))}
@@ -226,7 +307,7 @@ function UserManagement() {
             </Row>
 
             {/* 사용자 추가/편집 모달 */}
-            <Modal show={showModal} onHide={() => setShowModal(false)}>
+            <Modal show={showModal} onHide={() => {setShowModal(false); setPasswordError('');}}>
                 <Form onSubmit={handleSaveUser}>
                     <Modal.Header closeButton>
                         <Modal.Title>{editUser ? '사용자 편집' : '새 사용자 추가'}</Modal.Title>
@@ -259,12 +340,25 @@ function UserManagement() {
                             <Col>
                                 <Form.Group controlId="role">
                                     <Form.Label>역할</Form.Label>
-                                    <Form.Select defaultValue={editUser ? editUser.role : 'operator'}>
-                                        <option value="admin">관리자</option>
-                                        <option value="manager">매니저</option>
+                                    <Form.Select
+                                        defaultValue={editUser ? editUser.role : 'operator'}
+                                        disabled={currentUser.role !== 'admin' && (editUser?.role === 'admin' || editUser?.role === 'manager')}
+                                    >
+                                        {/* 관리자만 관리자와 매니저 역할 할당 가능 */}
+                                        {currentUser.role === 'admin' && (
+                                            <>
+                                                <option value="admin">관리자</option>
+                                                <option value="manager">매니저</option>
+                                            </>
+                                        )}
                                         <option value="operator">운영자</option>
                                         <option value="viewer">조회자</option>
                                     </Form.Select>
+                                    {currentUser.role !== 'admin' && editUser?.role === 'admin' && (
+                                        <Form.Text className="text-muted">
+                                            관리자 계정의 역할은 변경할 수 없습니다.
+                                        </Form.Text>
+                                    )}
                                 </Form.Group>
                             </Col>
                             <Col>
@@ -283,32 +377,51 @@ function UserManagement() {
 
                         <Form.Group controlId="status" className="mb-3">
                             <Form.Label>상태</Form.Label>
-                            <Form.Select defaultValue={editUser ? editUser.status : 'active'}>
+                            <Form.Select
+                                defaultValue={editUser ? editUser.status : 'active'}
+                                disabled={currentUser.role !== 'admin' && editUser?.role === 'admin'}
+                            >
                                 <option value="active">활성</option>
                                 <option value="inactive">비활성</option>
                             </Form.Select>
+                            {currentUser.role !== 'admin' && editUser?.role === 'admin' && (
+                                <Form.Text className="text-muted">
+                                    관리자 계정의 상태는 변경할 수 없습니다.
+                                </Form.Text>
+                            )}
                         </Form.Group>
 
                         {!editUser && (
                             <div>
                                 <hr />
                                 <h6>초기 비밀번호 설정</h6>
+                                {passwordError && (
+                                    <div className="alert alert-danger">{passwordError}</div>
+                                )}
                                 <Form.Group controlId="password" className="mb-3">
                                     <Form.Label>비밀번호</Form.Label>
-                                    <Form.Control type="password" required={!editUser} />
+                                    <Form.Control
+                                        type="password"
+                                        required={!editUser}
+                                        onChange={() => setPasswordError('')}
+                                    />
                                     <Form.Text className="text-muted">
                                         8자 이상, 특수문자 포함
                                     </Form.Text>
                                 </Form.Group>
                                 <Form.Group controlId="confirmPassword">
                                     <Form.Label>비밀번호 확인</Form.Label>
-                                    <Form.Control type="password" required={!editUser} />
+                                    <Form.Control
+                                        type="password"
+                                        required={!editUser}
+                                        onChange={() => setPasswordError('')}
+                                    />
                                 </Form.Group>
                             </div>
                         )}
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowModal(false)}>
+                        <Button variant="secondary" onClick={() => {setShowModal(false); setPasswordError('');}}>
                             취소
                         </Button>
                         <Button variant="primary" type="submit">
