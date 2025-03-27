@@ -11,8 +11,10 @@ import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import UserManagement from './pages/UserManagement';
 import Login from './pages/Login';
+import Unauthorized from './pages/Unauthorized';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import { PERMISSIONS } from './context/AuthContext';
 
 function App() {
     return (
@@ -21,10 +23,11 @@ function App() {
                 <Routes>
                     {/* 공개 라우트 */}
                     <Route path="/login" element={<Login />} />
+                    <Route path="/unauthorized" element={<Unauthorized />} />
 
                     {/* 보호된 라우트 */}
                     <Route path="/" element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_DASHBOARD}>
                             <MainLayout>
                                 <Dashboard />
                             </MainLayout>
@@ -32,7 +35,7 @@ function App() {
                     } />
 
                     <Route path="/products" element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_PRODUCTS}>
                             <MainLayout>
                                 <ProductManagement />
                             </MainLayout>
@@ -40,7 +43,7 @@ function App() {
                     } />
 
                     <Route path="/orders" element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_ORDERS}>
                             <MainLayout>
                                 <OrderManagement />
                             </MainLayout>
@@ -48,7 +51,7 @@ function App() {
                     } />
 
                     <Route path="/inventory" element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_INVENTORY}>
                             <MainLayout>
                                 <InventoryManagement />
                             </MainLayout>
@@ -56,7 +59,7 @@ function App() {
                     } />
 
                     <Route path="/supply" element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_SUPPLY}>
                             <MainLayout>
                                 <SupplyChainManagement />
                             </MainLayout>
@@ -64,7 +67,7 @@ function App() {
                     } />
 
                     <Route path="/analytics" element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_ANALYTICS}>
                             <MainLayout>
                                 <Analytics />
                             </MainLayout>
@@ -72,7 +75,7 @@ function App() {
                     } />
 
                     <Route path="/settings" element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_SETTINGS}>
                             <MainLayout>
                                 <Settings />
                             </MainLayout>
@@ -80,7 +83,7 @@ function App() {
                     } />
 
                     <Route path="/users" element={
-                        <ProtectedRoute>
+                        <ProtectedRoute requiredPermission={PERMISSIONS.VIEW_USERS}>
                             <MainLayout>
                                 <UserManagement />
                             </MainLayout>

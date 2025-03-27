@@ -5,11 +5,27 @@ import { useAuth } from '../context/AuthContext';
 
 function Sidebar() {
     const location = useLocation();
-    const { currentUser, logout } = useAuth();
+    const {
+        currentUser,
+        logout,
+        canViewDashboard,
+        canViewProducts,
+        canViewOrders,
+        canViewInventory,
+        canViewSupply,
+        canViewAnalytics,
+        canViewUsers,
+        canViewSettings
+    } = useAuth();
 
     // 로그아웃 처리
     const handleLogout = () => {
         logout();
+    };
+
+    // 활성 메뉴 클래스
+    const getNavLinkClass = (path) => {
+        return location.pathname === path ? 'active bg-primary rounded text-white' : 'text-white';
     };
 
     return (
@@ -22,65 +38,91 @@ function Sidebar() {
             <div className="bg-dark bg-opacity-50 rounded p-3 mb-4 text-center">
                 <div className="text-white mb-2">{currentUser?.name}</div>
                 <small className="text-light">{currentUser?.email}</small>
+                <div>
+                    <small className="badge bg-info">{currentUser?.role}</small>
+                </div>
             </div>
 
             <Nav className="flex-column">
-                <Nav.Link
-                    as={Link}
-                    to="/"
-                    className={location.pathname === '/' ? 'active bg-primary rounded text-white' : 'text-white'}
-                >
-                    대시보드
-                </Nav.Link>
-                <Nav.Link
-                    as={Link}
-                    to="/products"
-                    className={location.pathname === '/products' ? 'active bg-primary rounded text-white' : 'text-white'}
-                >
-                    제품 관리
-                </Nav.Link>
-                <Nav.Link
-                    as={Link}
-                    to="/orders"
-                    className={location.pathname === '/orders' ? 'active bg-primary rounded text-white' : 'text-white'}
-                >
-                    주문 관리
-                </Nav.Link>
-                <Nav.Link
-                    as={Link}
-                    to="/inventory"
-                    className={location.pathname === '/inventory' ? 'active bg-primary rounded text-white' : 'text-white'}
-                >
-                    재고 관리
-                </Nav.Link>
-                <Nav.Link
-                    as={Link}
-                    to="/supply"
-                    className={location.pathname === '/supply' ? 'active bg-primary rounded text-white' : 'text-white'}
-                >
-                    발주 관리
-                </Nav.Link>
-                <Nav.Link
-                    as={Link}
-                    to="/analytics"
-                    className={location.pathname === '/analytics' ? 'active bg-primary rounded text-white' : 'text-white'}
-                >
-                    통계 분석
-                </Nav.Link>
-                <Nav.Link
-                    as={Link}
-                    to="/users"
-                    className={location.pathname === '/users' ? 'active bg-primary rounded text-white' : 'text-white'}
-                >
-                    사용자 관리
-                </Nav.Link>
-                <Nav.Link
-                    as={Link}
-                    to="/settings"
-                    className={location.pathname === '/settings' ? 'active bg-primary rounded text-white' : 'text-white'}
-                >
-                    설정
-                </Nav.Link>
+                {canViewDashboard() && (
+                    <Nav.Link
+                        as={Link}
+                        to="/"
+                        className={getNavLinkClass('/')}
+                    >
+                        대시보드
+                    </Nav.Link>
+                )}
+
+                {canViewProducts() && (
+                    <Nav.Link
+                        as={Link}
+                        to="/products"
+                        className={getNavLinkClass('/products')}
+                    >
+                        제품 관리
+                    </Nav.Link>
+                )}
+
+                {canViewOrders() && (
+                    <Nav.Link
+                        as={Link}
+                        to="/orders"
+                        className={getNavLinkClass('/orders')}
+                    >
+                        주문 관리
+                    </Nav.Link>
+                )}
+
+                {canViewInventory() && (
+                    <Nav.Link
+                        as={Link}
+                        to="/inventory"
+                        className={getNavLinkClass('/inventory')}
+                    >
+                        재고 관리
+                    </Nav.Link>
+                )}
+
+                {canViewSupply() && (
+                    <Nav.Link
+                        as={Link}
+                        to="/supply"
+                        className={getNavLinkClass('/supply')}
+                    >
+                        발주 관리
+                    </Nav.Link>
+                )}
+
+                {canViewAnalytics() && (
+                    <Nav.Link
+                        as={Link}
+                        to="/analytics"
+                        className={getNavLinkClass('/analytics')}
+                    >
+                        통계 분석
+                    </Nav.Link>
+                )}
+
+                {canViewUsers() && (
+                    <Nav.Link
+                        as={Link}
+                        to="/users"
+                        className={getNavLinkClass('/users')}
+                    >
+                        사용자 관리
+                    </Nav.Link>
+                )}
+
+                {canViewSettings() && (
+                    <Nav.Link
+                        as={Link}
+                        to="/settings"
+                        className={getNavLinkClass('/settings')}
+                    >
+                        설정
+                    </Nav.Link>
+                )}
             </Nav>
 
             {/* 로그아웃 버튼 - 하단에 배치 */}

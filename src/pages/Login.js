@@ -15,12 +15,10 @@ function Login() {
 
     // 로그인 처리 함수
     const handleLogin = async (e) => {
-
         e.preventDefault();
         if (!email || !password) {
             setError('이메일과 비밀번호를 모두 입력해주세요.');
             return;
-
         }
 
         setIsLoading(true);
@@ -31,14 +29,24 @@ function Login() {
             // 실제 구현에서는 API 요청을 통해 인증을 처리해야 합니다.
             await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 지연으로 로딩 상태 시뮬레이션
 
-            // 예시 사용자 정보
-            if (email === 'admin@example.com' && password === 'password') {
+            // 테스트 계정 정보 (실제 구현에서는 API 응답으로 대체)
+            const testAccounts = [
+                { email: 'admin@example.com', password: 'password', role: 'admin', name: '관리자', id: 1 },
+                { email: 'manager@example.com', password: 'password', role: 'manager', name: '매니저', id: 2 },
+                { email: 'operator@example.com', password: 'password', role: 'operator', name: '운영자', id: 3 },
+                { email: 'viewer@example.com', password: 'password', role: 'viewer', name: '조회자', id: 4 }
+            ];
+
+            // 계정 찾기
+            const account = testAccounts.find(acc => acc.email === email && acc.password === password);
+
+            if (account) {
                 // 로그인 성공
                 const userData = {
-                    id: 1,
-                    name: '관리자',
-                    email: 'admin@example.com',
-                    role: 'admin'
+                    id: account.id,
+                    name: account.name,
+                    email: account.email,
+                    role: account.role
                 };
                 // AuthContext의 login 함수 사용
                 login('example-auth-token', userData);
@@ -119,6 +127,17 @@ function Login() {
                                 <small className="text-muted">
                                     계정 문제가 있으신가요? <a href="#" className="text-primary">관리자에게 문의하세요</a>
                                 </small>
+                            </div>
+
+                            {/* 테스트 계정 정보 (개발용) */}
+                            <div className="mt-4 p-3 bg-light rounded">
+                                <p className="mb-2 fw-bold">테스트 계정:</p>
+                                <ul className="mb-0 ps-3">
+                                    <li>관리자: admin@example.com / password</li>
+                                    <li>매니저: manager@example.com / password</li>
+                                    <li>운영자: operator@example.com / password</li>
+                                    <li>조회자: viewer@example.com / password</li>
+                                </ul>
                             </div>
                         </Card.Body>
                     </Card>
